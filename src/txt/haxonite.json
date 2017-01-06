@@ -1,0 +1,7 @@
+{
+  "haxonite": {
+    "version": "{{ haxonite_version }}",
+    "authors": "{{{ haxonite_authors }}}",
+    "logo": "public/haxonite.png"
+  }
+}

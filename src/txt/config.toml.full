@@ -1,0 +1,79 @@
+[server]
+port = 4000
+host = "localhost"
+
+[requests.show_request]
+type = "single"
+method = "GET"
+path = "/api/v1/resources/:id"
+[[requests.show_request.responses]]
+status = 200
+content_type = "application/json"
+response = "responses/resource.json"
+
+[requests.do_not_exists]
+type = "single"
+method = "GET"
+path = "/api/v1/other_resources/:id"
+[[requests.do_not_exists.responses]]
+status = 404
+content_type = "application/json"
+response = "responses/error.404.json"
+
+[requests.create_something]
+type = "single"
+method = "POST"
+path = "/api/v1/resources"
+[[requests.create_something.responses]]
+status = 201
+content_type = "application/json"
+response = "responses/resource.json"
+
+[requests.some_random_resources]
+type = "random" # return weighted random response
+method = "GET"
+path = "/api/v1/random_resources"
+[[requests.some_random_resources.responses]]
+status = 200
+content_type = "application/json"
+response = "responses/resources.json"
+weight = 95
+[[requests.some_random_resources.responses]]
+status = 500
+content_type = "application/json"
+response = "responses/error.500.json"
+weight = 5
+
+[requests.some_roundrobin_resources]
+type = "roundrobin" # cycles through defined responses
+method = "GET"
+path = "/api/v1/roundrobin_resources"
+[[requests.some_roundrobin_resources.responses]]
+status = 200
+content_type = "application/json"
+response = "responses/resources.json"
+[[requests.some_roundrobin_resources.responses]]
+status = 500
+content_type = "application/json"
+response = "responses/error.500.json"
+
+[requests.some_chain_resources]
+type = "chain" # returns all defined responses, last response is returned for all later requests
+method = "GET"
+path = "/api/v1/chain_resources"
+[[requests.some_chain_resources.responses]]
+status = 200
+content_type = "application/json"
+response = "responses/resources.json"
+[[requests.some_chain_resources.responses]]
+status = 500
+content_type = "application/json"
+response = "responses/error.500.json"
+
+[requests.assets_request]
+type = "static" # defines where static content is kept
+path = "/public"
+[[requests.assets_request.responses]]
+response = "assets"
+
+# vim: ft=toml

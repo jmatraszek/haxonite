@@ -1,0 +1,19 @@
+[server]
+port = 4000
+host = "localhost"
+
+[requests.example_request]
+method = "GET"
+path = "/"
+[[requests.example_request.responses]]
+status = 200
+content_type = "application/json"
+response = "responses/haxonite.json"
+
+[requests.assets_request]
+type = "static"
+path = "/public"
+[[requests.assets_request.responses]]
+response = "assets"
+
+# vim: ft=toml
