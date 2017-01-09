@@ -10,4 +10,4 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Initial release
 
 [Unreleased]: https://github.com/jmatraszek/haxonite/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/jmatraszek/haxonite/releases/tag/v0.1.0
+[0.1.0]: https://github.com/jmatraszek/haxonite/commit/6679ba9
