@@ -102,7 +102,7 @@ fn run() -> Result<(), HaxoniteError> {
     chain.link_after(logger_after);
 
     // Initialize Iron to process requests
-    let _iron = Iron::new(chain).http((host.as_ref(), port_number)).unwrap();
+    let _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
     info!("Haxonite running on port: {}!", port_number);
 
     Ok(())

@@ -1,3 +1,4 @@
+extern crate iron;
 use std::io;
 use std::fmt;
 use std::error::Error;
@@ -5,6 +6,7 @@ use std::error::Error;
 #[derive(Debug)]
 pub enum HaxoniteError {
     Io(io::Error),
+    Server(iron::error::HttpError),
     NoRequestDefined,
     NoPathDefined(String),
     NoResponseDefined(String),
@@ -20,10 +22,17 @@ impl From<io::Error> for HaxoniteError {
     }
 }
 
+impl From<iron::error::HttpError> for HaxoniteError {
+    fn from(err: iron::error::HttpError) -> HaxoniteError {
+        HaxoniteError::Server(err)
+    }
+}
+
 impl Error for HaxoniteError {
     fn description(&self) -> &str {
         match *self {
             HaxoniteError::Io(ref err) => err.description(),
+            HaxoniteError::Server(ref err) => err.description(),
             HaxoniteError::NoRequestDefined => "No request defined in config.toml",
             HaxoniteError::NoPathDefined(_) => "No path defined for request in config.toml",
             HaxoniteError::NoResponseDefined(_) => "No response defined for request in config.toml",
@@ -37,6 +46,7 @@ impl Error for HaxoniteError {
     fn cause(&self) -> Option<&Error> {
         match *self {
             HaxoniteError::Io(ref err) => Some(err),
+            HaxoniteError::Server(ref err) => Some(err),
             HaxoniteError::NoRequestDefined |
             HaxoniteError::NoPathDefined(_) |
             HaxoniteError::NoResponseDefined(_) |
@@ -52,6 +62,7 @@ impl fmt::Display for HaxoniteError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             HaxoniteError::Io(ref err) => write!(f, "{:?}: {}", err.kind(), err),
+            HaxoniteError::Server(ref err) => write!(f, "ServerError: {}", err),
             HaxoniteError::NoRequestDefined => {
                 write!(f,
                        "NoRequestDefined error: No request defined in config.toml")
