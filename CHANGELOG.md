@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [Unreleased]
+### Fixed
+- [#1](https://github.com/jmatraszek/haxonite/issues/1): Fix panic when
+  Iron cannot start
 
 ## [0.1.0] - 2017-01-06
 ### Added
