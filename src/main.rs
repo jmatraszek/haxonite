@@ -216,7 +216,7 @@ fn get_single_response_handler(request_name: String, response_config: ResponseCo
     if !Path::new(&response).exists() {
         return Err(HaxoniteError::ResponseDoesNotExist(request_name.clone()));
     }
-    Ok(SingleResponse::new(status, content_type.clone(), response.clone()))
+    Ok(SingleResponse::new(status, content_type.clone(), response.clone(), response_config.time_to_sleep))
 }
 
 fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {

@@ -11,6 +11,16 @@ status = 200
 content_type = "application/json"
 response = "responses/resource.json"
 
+[requests.show_request]
+type = "single"
+method = "GET"
+path = "/api/v1/slow_resources/:id"
+[[requests.show_request.responses]]
+status = 200
+time_to_sleep = 20 # seconds
+content_type = "application/json"
+response = "responses/resource.json"
+
 [requests.do_not_exists]
 type = "single"
 method = "GET"

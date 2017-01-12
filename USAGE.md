@@ -144,6 +144,15 @@ This specifies the HTTP status that the response will have. Default value:
 status = 200
 ```
 
+#### Response configuration: `time_to_sleep` (optional)
+
+This specifies how long Haxonite will wait before returning the response.
+May be useful for testing timeout handling. Default value: `0`. Example:
+
+```
+time_to_sleep = 20
+```
+
 #### Response configuration: `content_type` (optional)
 
 This specifies the "Content-Type" HTTP header that the response will have.

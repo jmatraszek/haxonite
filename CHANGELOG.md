@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [Unreleased]
+### Added
+- [#3](https://github.com/jmatraszek/haxonite/issues/3):  Add an option to
+  configure response to be "slow"
+
 ### Fixed
 - [#1](https://github.com/jmatraszek/haxonite/issues/1): Fix panic when
   Iron cannot start

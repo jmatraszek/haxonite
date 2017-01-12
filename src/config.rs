@@ -53,6 +53,7 @@ pub struct ResponseConfig {
     pub status: Option<u16>,
     pub response: Option<String>,
     pub weight: Option<u32>,
+    pub time_to_sleep: Option<u64>,
 }
 
 const DEFAULT_PORT: u16 = 4000;
