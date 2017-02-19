@@ -11,23 +11,12 @@ pub struct SingleResponse {
     delay: Option<u64>,
 }
 
-impl<'a> SingleResponse {
-    pub fn new(status: u16, headers: Vec<String>, response_path: String, delay: Option<u64>) -> SingleResponse {
-
-        let headers_vec = headers.iter()
-            .map(
-                |header| header.split(": ").map(
-                    // TODO: This is quite stupid and could be done with &str,
-                    // but I decided to use String to not fight borrow checker for now...
-                    |hdr| hdr.to_string()
-                ).collect()
-            )
-            .collect();
-
+impl SingleResponse {
+    pub fn new(status: u16, headers: Vec<Vec<String>>, response_path: String, delay: Option<u64>) -> SingleResponse {
         SingleResponse {
             status: status,
             response_path: response_path,
-            headers: headers_vec,
+            headers: headers,
             delay: delay,
         }
     }

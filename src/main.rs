@@ -9,6 +9,7 @@ use clap::{Arg, App, SubCommand};
 
 extern crate toml;
 extern crate rustc_serialize;
+extern crate regex;
 
 extern crate iron;
 use iron::prelude::*;
@@ -203,7 +204,7 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
 }
 
 fn get_single_response_handler(request_name: String, response_config: ResponseConfig) -> Result<SingleResponse, HaxoniteError> {
-    let headers = response_config.headers.unwrap_or_else(config::default_headers);
+    let headers = process_headers(response_config.headers);
     let status = match response_config.status {
         Some(status) if status >= 100 && status <= 599 => status, // switch to Range's contains() when it will be stable
         Some(status) => return Err(HaxoniteError::InvalidHTTPStatus(request_name.clone(), status)),
@@ -217,6 +218,33 @@ fn get_single_response_handler(request_name: String, response_config: ResponseCo
         return Err(HaxoniteError::ResponseDoesNotExist(request_name.clone()));
     }
     Ok(SingleResponse::new(status, headers.clone(), response.clone(), response_config.delay))
+}
+
+fn process_headers(headers: Option<Vec<String>>) -> Vec<Vec<String>> {
+    // TODO: This method should be optimized to not compile regex on every run,
+    // not match on header when the default is used (it's valid)
+    use regex::Regex;
+    let re = Regex::new(r"([\w-]+):\s+([\w/]+)").unwrap();
+
+    let headers = headers.unwrap_or_else(config::default_headers);
+    let headers_vec = headers.iter()
+        .filter(|header| {
+            if re.is_match(header) {
+                true
+            } else {
+                warn!("Header {} is invalid (does not match \": \"). Skipping.", header);
+                false
+            }
+        })
+        .map(|header| {
+                header.split(": ")
+                    .map(// TODO: This is quite stupid and could be done with &str,
+                        // but I decided to use String to not fight borrow checker for now...
+                        |hdr| hdr.to_string())
+                    .collect()
+        })
+    .collect();
+    headers_vec
 }
 
 fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {
