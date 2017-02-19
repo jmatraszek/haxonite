@@ -203,7 +203,7 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
 }
 
 fn get_single_response_handler(request_name: String, response_config: ResponseConfig) -> Result<SingleResponse, HaxoniteError> {
-    let content_type = response_config.content_type.unwrap_or_else(config::default_content_type);
+    let headers = response_config.headers.unwrap_or_else(config::default_headers);
     let status = match response_config.status {
         Some(status) if status >= 100 && status <= 599 => status, // switch to Range's contains() when it will be stable
         Some(status) => return Err(HaxoniteError::InvalidHTTPStatus(request_name.clone(), status)),
@@ -216,7 +216,7 @@ fn get_single_response_handler(request_name: String, response_config: ResponseCo
     if !Path::new(&response).exists() {
         return Err(HaxoniteError::ResponseDoesNotExist(request_name.clone()));
     }
-    Ok(SingleResponse::new(status, content_type.clone(), response.clone(), response_config.delay))
+    Ok(SingleResponse::new(status, headers.clone(), response.clone(), response_config.delay))
 }
 
 fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {

@@ -6,17 +6,28 @@ use utils;
 #[derive(Debug)]
 pub struct SingleResponse {
     response_path: String,
-    content_type: String,
+    headers: Vec<Vec<String>>,
     status: u16,
     delay: Option<u64>,
 }
 
-impl SingleResponse {
-    pub fn new(status: u16, content_type: String, response_path: String, delay: Option<u64>) -> SingleResponse {
+impl<'a> SingleResponse {
+    pub fn new(status: u16, headers: Vec<String>, response_path: String, delay: Option<u64>) -> SingleResponse {
+
+        let headers_vec = headers.iter()
+            .map(
+                |header| header.split(": ").map(
+                    // TODO: This is quite stupid and could be done with &str,
+                    // but I decided to use String to not fight borrow checker for now...
+                    |hdr| hdr.to_string()
+                ).collect()
+            )
+            .collect();
+
         SingleResponse {
             status: status,
             response_path: response_path,
-            content_type: content_type,
+            headers: headers_vec,
             delay: delay,
         }
     }
@@ -25,7 +36,10 @@ impl SingleResponse {
 impl Handler for SingleResponse {
     fn handle(&self, _: &mut Request) -> IronResult<Response> {
         let mut response = Response::with((status::Status::from_u16(self.status), utils::response_body(self.response_path.clone())));
-        response.headers.set_raw("Content-Type", vec![self.content_type.clone().into_bytes()]);
+        for header in &self.headers {
+            // FIXME: This will fail for headers in a wrong format (without ": ")
+            response.headers.set_raw(header[0].clone(), vec![header[1].as_bytes().to_vec()]);
+        }
         if let Some(delay) = self.delay {
             thread::sleep(time::Duration::from_secs(delay));
         };
