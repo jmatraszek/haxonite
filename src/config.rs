@@ -49,7 +49,7 @@ impl Decodable for RequestConfig {
 
 #[derive(Debug, RustcDecodable, Clone)]
 pub struct ResponseConfig {
-    pub content_type: Option<String>,
+    pub headers: Option<Vec<String>>,
     pub status: Option<u16>,
     pub response: Option<String>,
     pub weight: Option<u32>,
@@ -90,9 +90,8 @@ pub fn default_method() -> String {
     DEFAULT_METHOD.to_owned()
 }
 
-const DEFAULT_CONTENT_TYPE: &'static str = "application/json";
-pub fn default_content_type() -> String {
-    DEFAULT_CONTENT_TYPE.to_owned()
+pub fn default_headers() -> Vec<String> {
+    vec!["Content-Type: application/json".to_owned()]
 }
 
 const DEFAULT_TYPE: &'static str = "single";

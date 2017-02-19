@@ -93,7 +93,9 @@ method = "GET"
 path = "/"
 [[requests.example_request.responses]]
 status = 200
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/haxonite.json"
 
 [requests.assets_request]
@@ -121,12 +123,12 @@ Haxonite:
 
 ```
 $ cd example && haxonite
-19:29:03 [INFO] haxonite: Processing config!
-19:29:03 [INFO] haxonite: Processing config for static: RequestConfig { type_: Some("static"), method: None, path: Some("/public"), responses: Some([ResponseConfig { content_type: None, status: None, response: Some("assets"), weight: None }]) }!
-19:29:03 [INFO] haxonite: Mounting static for: /public using static type of handler.
-
-19:29:03 [INFO] haxonite: Processing config for example_request: RequestConfig { type_: None, method: Some("GET"), path: Some("/"), responses: Some([ResponseConfig { content_type: Some("application/json"), status: Some(200), response: Some("responses/haxonite.json"), weight: None }]) }!
-19:29:03 [INFO] haxonite: Defining route for: / using single type of handler.
+14:11:42 [INFO] Processing config!
+14:11:42 [INFO] Processing config for example_request: RequestConfig { type_: None, method: Some("GET"), path: Some("/"), responses: Some([ResponseConfig { headers: Some(["Content-Type: application/json"]), status: Some(200), response: Some("responses/haxonite.json"), weight: None, delay: None }]) }!
+14:11:42 [INFO] Defining route for: / using single type of handler.
+14:11:42 [INFO] Processing config for assets_request: RequestConfig { type_: Some("static"), method: None, path: Some("/public"), responses: Some([ResponseConfig { headers: None, status: None, response: Some("assets"), weight: None, delay: None }]) }!
+14:11:42 [INFO] Mounting static for: /public using static type of handler.
+14:11:42 [INFO] Haxonite running on port: 4000!
 ```
 
 And let's make a request to our mocked API and see what Haxonite returns:
