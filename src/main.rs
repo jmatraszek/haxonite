@@ -217,7 +217,7 @@ fn get_single_response_handler(request_name: String, response_config: ResponseCo
     if !Path::new(&response).exists() {
         return Err(HaxoniteError::ResponseDoesNotExist(request_name.clone()));
     }
-    Ok(SingleResponse::new(status, headers.clone(), response.clone(), response_config.delay))
+    Ok(SingleResponse::new(status, headers, response, response_config.delay))
 }
 
 fn process_headers(headers: Option<Vec<String>>) -> Vec<Vec<String>> {
@@ -232,18 +232,19 @@ fn process_headers(headers: Option<Vec<String>>) -> Vec<Vec<String>> {
             if re.is_match(header) {
                 true
             } else {
-                warn!("Header {} is invalid (does not match \": \"). Skipping.", header);
+                warn!("Header {} is invalid (does not match \": \"). Skipping.",
+                      header);
                 false
             }
         })
         .map(|header| {
-                header.split(": ")
-                    .map(// TODO: This is quite stupid and could be done with &str,
-                        // but I decided to use String to not fight borrow checker for now...
-                        |hdr| hdr.to_string())
-                    .collect()
+            header.split(": ")
+                .map(// TODO: This is quite stupid and could be done with &str,
+                     // but I decided to use String to not fight borrow checker for now...
+                     |hdr| hdr.to_string())
+                .collect()
         })
-    .collect()
+        .collect()
 }
 
 fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {
