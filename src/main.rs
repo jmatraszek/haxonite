@@ -227,7 +227,7 @@ fn process_headers(headers: Option<Vec<String>>) -> Vec<Vec<String>> {
     let re = Regex::new(r"([\w-]+):\s+([\w/]+)").unwrap();
 
     let headers = headers.unwrap_or_else(config::default_headers);
-    let headers_vec = headers.iter()
+    headers.iter()
         .filter(|header| {
             if re.is_match(header) {
                 true
@@ -243,8 +243,7 @@ fn process_headers(headers: Option<Vec<String>>) -> Vec<Vec<String>> {
                         |hdr| hdr.to_string())
                     .collect()
         })
-    .collect();
-    headers_vec
+    .collect()
 }
 
 fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {
