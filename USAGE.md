@@ -64,12 +64,16 @@ method = "GET"
 path = "/api/v1/random_resources"
 [[requests.some_random_resources.responses]]
 status = 200
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resources.json"
 weight = 95
 [[requests.some_random_resources.responses]]
 status = 500
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/error.500.json"
 weight = 5
 
@@ -127,11 +131,15 @@ parameter specifies how they are returned. Example:
 ```
 [[requests.show.responses]]
 status = 200
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resource.json"
 [[requests.show.responses]]
 status = 500
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/error.500.json"
 ```
 
@@ -153,13 +161,16 @@ May be useful for testing timeout handling. Default value: `0`. Example:
 delay = 20
 ```
 
-#### Response configuration: `content_type` (optional)
+#### Response configuration: `headers` (optional)
 
-This specifies the "Content-Type" HTTP header that the response will have.
-Default value: `"application/json"`. Example:
+This specifies the HTTP headers that will be set for the response. Default
+value: `["Content-Type: application/json"]`. Example:
 
 ```
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json",
+    "Come-Customer-Header: with_some_customer_value"
+]
 ```
 
 **NOTE**: This will probably change in the future, when Haxonite gains

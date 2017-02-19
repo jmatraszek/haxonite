@@ -8,7 +8,9 @@ method = "GET"
 path = "/api/v1/resources/:id"
 [[requests.show_request.responses]]
 status = 200
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resource.json"
 
 [requests.show_request]
@@ -18,7 +20,9 @@ path = "/api/v1/slow_resources/:id"
 [[requests.show_request.responses]]
 status = 200
 delay = 20 # seconds
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resource.json"
 
 [requests.do_not_exists]
@@ -27,7 +31,9 @@ method = "GET"
 path = "/api/v1/other_resources/:id"
 [[requests.do_not_exists.responses]]
 status = 404
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/error.404.json"
 
 [requests.create_something]
@@ -36,7 +42,9 @@ method = "POST"
 path = "/api/v1/resources"
 [[requests.create_something.responses]]
 status = 201
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resource.json"
 
 [requests.some_random_resources]
@@ -45,12 +53,16 @@ method = "GET"
 path = "/api/v1/random_resources"
 [[requests.some_random_resources.responses]]
 status = 200
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resources.json"
 weight = 95
 [[requests.some_random_resources.responses]]
 status = 500
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/error.500.json"
 weight = 5
 
@@ -60,11 +72,15 @@ method = "GET"
 path = "/api/v1/roundrobin_resources"
 [[requests.some_roundrobin_resources.responses]]
 status = 200
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resources.json"
 [[requests.some_roundrobin_resources.responses]]
 status = 500
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/error.500.json"
 
 [requests.some_chain_resources]
@@ -73,11 +89,15 @@ method = "GET"
 path = "/api/v1/chain_resources"
 [[requests.some_chain_resources.responses]]
 status = 200
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/resources.json"
 [[requests.some_chain_resources.responses]]
 status = 500
-content_type = "application/json"
+headers = [
+	"Content-Type: application/json"
+]
 response = "responses/error.500.json"
 
 [requests.assets_request]
