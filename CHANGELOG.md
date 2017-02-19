@@ -5,7 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [Unreleased]
 ### Added
-- [#3](https://github.com/jmatraszek/haxonite/issues/3):  Add an option to
+- [#2](https://github.com/jmatraszek/haxonite/issues/2): Support setting
+  arbitrary HTTP headers in the response
+- [#3](https://github.com/jmatraszek/haxonite/issues/3): Add an option to
   configure response to be "slow"
 
 ### Fixed
