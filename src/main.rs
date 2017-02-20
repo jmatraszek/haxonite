@@ -5,7 +5,7 @@ static FORMAT: &'static str = "{request-time}: {method} {uri} {status} {response
 
 #[macro_use]
 extern crate clap;
-use clap::{Arg, ArgMatches, App, SubCommand};
+use clap::{Arg, ArgMatches, App, AppSettings, SubCommand};
 
 extern crate toml;
 extern crate rustc_serialize;
@@ -255,6 +255,7 @@ fn process_headers(headers: Option<Vec<String>>) -> Vec<Vec<String>> {
 
 fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {
     App::new("Haxonite")
+        .setting(AppSettings::SubcommandRequired)
         .version(VERSION)
         .author(AUTHORS)
         .about("Easy API mocking")
