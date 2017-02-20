@@ -69,7 +69,7 @@ fn run() -> Result<(), HaxoniteError> {
         return Ok(());
     }
 
-    if let Some(matches) = matches.subcommand_matches("new") {
+    if let Some(matches) = matches.subcommand_matches("serve") {
         try!(serve(matches));
     }
     Ok(())
