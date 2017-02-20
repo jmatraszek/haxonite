@@ -33,7 +33,13 @@ use simplelog::{SimpleLogger, LogLevelFilter};
 
 extern crate logger;
 use logger::Logger;
-use logger::format::Format;
+use logger::Format;
+
+extern crate notify;
+
+use notify::{RecommendedWatcher, Watcher, RecursiveMode};
+use std::sync::mpsc::channel;
+use std::time::Duration;
 
 mod config;
 use config::{Config, ServerConfig, RequestConfig, ResponseConfig};
@@ -71,6 +77,9 @@ fn run() -> Result<(), HaxoniteError> {
 
     if let Some(matches) = matches.subcommand_matches("serve") {
         try!(serve(matches));
+    }
+    if let Some(matches) = matches.subcommand_matches("watch") {
+        try!(watch(matches));
     }
     Ok(())
 }
@@ -110,9 +119,25 @@ fn serve(matches: &ArgMatches) -> Result<(), HaxoniteError> {
     chain.link_after(logger_after);
 
     // Initialize Iron to process requests
-    let _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
+    let mut _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
     info!("Haxonite running on port: {}!", port_number);
     Ok(())
+}
+
+fn watch(matches: &ArgMatches) -> Result<(), HaxoniteError> {
+    let config_file = matches.value_of("config_file").unwrap_or("config.toml");
+
+    let (tx_watcher, rx_watcher) = channel();
+    let mut watcher: RecommendedWatcher = try!(Watcher::new(tx_watcher, Duration::from_secs(1)));
+    try!(watcher.watch(config_file, RecursiveMode::Recursive));
+    loop {
+        match rx_watcher.recv() {
+            Ok(event) => {
+                info!("{:?}", event);
+            },
+            Err(e) => error!("watch error: {:?}", e),
+        }
+    }
 }
 
 fn process_config_requests(requests: &HashMap<String, RequestConfig>,
