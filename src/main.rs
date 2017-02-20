@@ -5,7 +5,7 @@ static FORMAT: &'static str = "{request-time}: {method} {uri} {status} {response
 
 #[macro_use]
 extern crate clap;
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, ArgMatches, App, SubCommand};
 
 extern crate toml;
 extern crate rustc_serialize;
@@ -69,6 +69,12 @@ fn run() -> Result<(), HaxoniteError> {
         return Ok(());
     }
 
+    try!(serve(matches));
+
+    Ok(())
+}
+
+fn serve(matches: ArgMatches) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
     let config_content = try!(config::read_config(config_file));
     let config: Config = toml::decode_str(config_content.as_ref()).unwrap(); // TODO: remove unwrap to handle malformed config
@@ -105,7 +111,6 @@ fn run() -> Result<(), HaxoniteError> {
     // Initialize Iron to process requests
     let _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
     info!("Haxonite running on port: {}!", port_number);
-
     Ok(())
 }
 
