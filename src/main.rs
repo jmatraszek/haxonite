@@ -69,12 +69,13 @@ fn run() -> Result<(), HaxoniteError> {
         return Ok(());
     }
 
-    try!(serve(matches));
-
+    if let Some(matches) = matches.subcommand_matches("new") {
+        try!(serve(matches));
+    }
     Ok(())
 }
 
-fn serve(matches: ArgMatches) -> Result<(), HaxoniteError> {
+fn serve(matches: &ArgMatches) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
     let config_content = try!(config::read_config(config_file));
     let config: Config = toml::decode_str(config_content.as_ref()).unwrap(); // TODO: remove unwrap to handle malformed config
@@ -257,24 +258,50 @@ fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {
         .version(VERSION)
         .author(AUTHORS)
         .about("Easy API mocking")
-        .arg(Arg::with_name("host")
-            .short("h")
-            .long("host")
-            .value_name("HOST")
-            .help("Run Haxonite on the host. Default: localhost.")
-            .takes_value(true))
-        .arg(Arg::with_name("port_number")
-            .short("p")
-            .long("port")
-            .value_name("PORT")
-            .help("Run Haxonite on the specified port. Default: 4000.")
-            .takes_value(true))
-        .arg(Arg::with_name("config_file")
-            .short("c")
-            .long("config")
-            .value_name("FILE")
-            .help("Sets a custom config file. Default: config.toml.")
-            .takes_value(true))
+        .subcommand(SubCommand::with_name("serve")
+            .about("Starts Haxonite server")
+            .version(VERSION)
+            .author(AUTHORS)
+            .arg(Arg::with_name("host")
+                 .short("h")
+                 .long("host")
+                 .value_name("HOST")
+                 .help("Run Haxonite on the host. Default: localhost.")
+                 .takes_value(true))
+            .arg(Arg::with_name("port_number")
+                 .short("p")
+                 .long("port")
+                 .value_name("PORT")
+                 .help("Run Haxonite on the specified port. Default: 4000.")
+                 .takes_value(true))
+            .arg(Arg::with_name("config_file")
+                 .short("c")
+                 .long("config")
+                 .value_name("FILE")
+                 .help("Sets a custom config file. Default: config.toml.")
+                 .takes_value(true)))
+        .subcommand(SubCommand::with_name("watch")
+            .about("Starts Haxonite server with dynamic reload on change")
+            .version(VERSION)
+            .author(AUTHORS)
+            .arg(Arg::with_name("host")
+                 .short("h")
+                 .long("host")
+                 .value_name("HOST")
+                 .help("Run Haxonite on the host. Default: localhost.")
+                 .takes_value(true))
+            .arg(Arg::with_name("port_number")
+                 .short("p")
+                 .long("port")
+                 .value_name("PORT")
+                 .help("Run Haxonite on the specified port. Default: 4000.")
+                 .takes_value(true))
+            .arg(Arg::with_name("config_file")
+                 .short("c")
+                 .long("config")
+                 .value_name("FILE")
+                 .help("Sets a custom config file. Default: config.toml.")
+                 .takes_value(true)))
         .subcommand(SubCommand::with_name("new")
             .about("Create new Haxonite project")
             .version(VERSION)
