@@ -38,6 +38,7 @@ use logger::Format;
 extern crate notify;
 
 use notify::{RecommendedWatcher, Watcher, RecursiveMode};
+use notify::DebouncedEvent;
 use notify::DebouncedEvent::{Create, Write};
 use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
@@ -87,9 +88,9 @@ fn run() -> Result<(), HaxoniteError> {
     Ok(())
 }
 
-fn serve(matches: &ArgMatches, rx_server: Option<Receiver<&str>>) -> Result<(), HaxoniteError> {
+fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
-    loop {
+    'serve: loop {
         let config_content = try!(config::read_config(config_file));
         let config: Config = toml::decode_str(config_content.as_ref()).unwrap(); // TODO: remove unwrap to handle malformed config
         debug!("Using config: {:?}!", config);
@@ -126,42 +127,36 @@ fn serve(matches: &ArgMatches, rx_server: Option<Receiver<&str>>) -> Result<(), 
         let mut _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
         info!("Haxonite running on port: {}!", port_number);
 
-        if let Some(ref rx_server) = rx_server {
-            match rx_server.recv() {
-                Ok(_) => {
-                    _iron.close().expect("Iron cannot be closed");
-                    thread::sleep(Duration::from_secs(1));
-                    continue
-                },
-                Err(_) => break
+        if let Some(ref rx_watcher) = rx_watcher {
+            'watch: loop {
+                info!("Waiting for event to be received!");
+                match rx_watcher.recv() {
+                    Ok(event) => {
+                        info!("Event: {:?}", event);
+                        match event {
+                            Create(_) | Write(_) => {
+                                _iron.close().expect("Iron cannot be closed");
+                                thread::sleep(Duration::from_secs(1));
+                                break 'watch
+                            },
+                            _ => continue 'watch
+                        }
+                    },
+                    Err(e) => error!("watch error: {:?}", e),
+                }
             }
         }
     }
-    Ok(())
 }
 
 fn watch(matches: &ArgMatches) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
 
     let (tx_watcher, rx_watcher) = channel();
-    let (tx_server, rx_server) = channel();
-
     let mut watcher: RecommendedWatcher = try!(Watcher::new(tx_watcher, Duration::from_secs(1)));
     try!(watcher.watch(config_file, RecursiveMode::NonRecursive)); // NonRecursie as we only watch config file
-    thread::spawn(move || {
-        loop {
-            match rx_watcher.recv() {
-                Ok(event) => {
-                    match event {
-                        Create(_) | Write(_) => tx_server.send("reload").unwrap(), // reload only on file save or create
-                        _ => continue
-                    }
-                },
-                Err(e) => error!("watch error: {:?}", e),
-            }
-        }
-    });
-    serve(matches, Some(rx_server))
+
+    serve(matches, Some(rx_watcher))
 }
 
 fn process_config_requests(requests: &HashMap<String, RequestConfig>,
@@ -241,13 +236,13 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
         Ok(a) => {
             match type_.as_ref() {
                 "static" => {
-                    info!("Mounting static for: {} using {} type of handler.\n",
+                    info!("Mounting static for: {} using {} type of handler.",
                           path,
                           type_);
                     mount.mount(path.as_ref(), handler);
                 }
                 _ => {
-                    info!("Defining route for: {} using {} type of handler.\n",
+                    info!("Defining route for: {} using {} type of handler.",
                           path,
                           type_);
                     router.route(a, path.clone(), handler, request_name);
