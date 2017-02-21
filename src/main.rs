@@ -38,7 +38,7 @@ use logger::Format;
 extern crate notify;
 
 use notify::{RecommendedWatcher, Watcher, RecursiveMode};
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
 
 mod config;
@@ -76,7 +76,7 @@ fn run() -> Result<(), HaxoniteError> {
     }
 
     if let Some(matches) = matches.subcommand_matches("serve") {
-        try!(serve(matches));
+        try!(serve(matches, None));
     }
     if let Some(matches) = matches.subcommand_matches("watch") {
         try!(watch(matches));
@@ -84,43 +84,52 @@ fn run() -> Result<(), HaxoniteError> {
     Ok(())
 }
 
-fn serve(matches: &ArgMatches) -> Result<(), HaxoniteError> {
+fn serve(matches: &ArgMatches, rx_server: Option<Receiver<&str>>) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
-    let config_content = try!(config::read_config(config_file));
-    let config: Config = toml::decode_str(config_content.as_ref()).unwrap(); // TODO: remove unwrap to handle malformed config
-    debug!("Using config: {:?}!", config);
+    loop {
+        let config_content = try!(config::read_config(config_file));
+        let config: Config = toml::decode_str(config_content.as_ref()).unwrap(); // TODO: remove unwrap to handle malformed config
+        debug!("Using config: {:?}!", config);
 
-    let server_config = config.server.unwrap_or_else(ServerConfig::default);
-    let host = match value_t!(matches, "host", String) { // TODO: rewrite these matches
-        Ok(host) => host,
-        Err(_) => server_config.host.unwrap_or_else(config::default_host),
-    };
-    let port_number = match value_t!(matches, "port_number", u16) {
-        Ok(port_number) => port_number,
-        Err(_) => server_config.port.unwrap_or_else(config::default_port),
-    };
+        let server_config = config.server.unwrap_or_else(ServerConfig::default);
+        let host = match value_t!(matches, "host", String) { // TODO: rewrite these matches
+            Ok(host) => host,
+            Err(_) => server_config.host.unwrap_or_else(config::default_host),
+        };
+        let port_number = match value_t!(matches, "port_number", u16) {
+            Ok(port_number) => port_number,
+            Err(_) => server_config.port.unwrap_or_else(config::default_port),
+        };
 
-    // Initialize Iron's router and pass it to config processing function to define routes
-    let mut router = Router::new();
-    let mut mount = Mount::new();
-    match config.requests {
-        Some(requests) => {
-            try!(process_config_requests(&requests, &mut mount, &mut router));
+        // Initialize Iron's router and pass it to config processing function to define routes
+        let mut router = Router::new();
+        let mut mount = Mount::new();
+        match config.requests {
+            Some(requests) => {
+                try!(process_config_requests(&requests, &mut mount, &mut router));
+            }
+            None => return Err(HaxoniteError::NoRequestDefined),
         }
-        None => return Err(HaxoniteError::NoRequestDefined),
+        mount.mount("/", router);
+
+        // Insert logger middlewares before and after router
+        let mut chain = Chain::new(mount);
+        let format = Format::new(FORMAT);
+        let (logger_before, logger_after) = Logger::new(Some(format.unwrap()));
+        chain.link_before(logger_before);
+        chain.link_after(logger_after);
+
+        // Initialize Iron to process requests
+        let mut _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
+        info!("Haxonite running on port: {}!", port_number);
+        if let Some(ref rx_server) = rx_server {
+        info!("RECEIVER: {:?}!", rx_server);
+            match rx_server.recv() {
+                Ok(_) => continue,
+                Err(_) => break
+            }
+        }
     }
-    mount.mount("/", router);
-
-    // Insert logger middlewares before and after router
-    let mut chain = Chain::new(mount);
-    let format = Format::new(FORMAT);
-    let (logger_before, logger_after) = Logger::new(Some(format.unwrap()));
-    chain.link_before(logger_before);
-    chain.link_after(logger_after);
-
-    // Initialize Iron to process requests
-    let mut _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
-    info!("Haxonite running on port: {}!", port_number);
     Ok(())
 }
 
@@ -128,12 +137,15 @@ fn watch(matches: &ArgMatches) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
 
     let (tx_watcher, rx_watcher) = channel();
+    let (tx_server, rx_server) = channel();
     let mut watcher: RecommendedWatcher = try!(Watcher::new(tx_watcher, Duration::from_secs(1)));
     try!(watcher.watch(config_file, RecursiveMode::Recursive));
+    try!(serve(matches, Some(rx_server)));
     loop {
         match rx_watcher.recv() {
             Ok(event) => {
                 info!("{:?}", event);
+                tx_server.send("reload");
             },
             Err(e) => error!("watch error: {:?}", e),
         }
