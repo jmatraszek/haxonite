@@ -38,8 +38,11 @@ use logger::Format;
 extern crate notify;
 
 use notify::{RecommendedWatcher, Watcher, RecursiveMode};
+use notify::DebouncedEvent::{Create, Write};
 use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
+
+use std::thread;
 
 mod config;
 use config::{Config, ServerConfig, RequestConfig, ResponseConfig};
@@ -122,10 +125,14 @@ fn serve(matches: &ArgMatches, rx_server: Option<Receiver<&str>>) -> Result<(), 
         // Initialize Iron to process requests
         let mut _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
         info!("Haxonite running on port: {}!", port_number);
+
         if let Some(ref rx_server) = rx_server {
-        info!("RECEIVER: {:?}!", rx_server);
             match rx_server.recv() {
-                Ok(_) => continue,
+                Ok(_) => {
+                    _iron.close().expect("Iron cannot be closed");
+                    thread::sleep(Duration::from_secs(1));
+                    continue
+                },
                 Err(_) => break
             }
         }
@@ -138,18 +145,23 @@ fn watch(matches: &ArgMatches) -> Result<(), HaxoniteError> {
 
     let (tx_watcher, rx_watcher) = channel();
     let (tx_server, rx_server) = channel();
+
     let mut watcher: RecommendedWatcher = try!(Watcher::new(tx_watcher, Duration::from_secs(1)));
-    try!(watcher.watch(config_file, RecursiveMode::Recursive));
-    try!(serve(matches, Some(rx_server)));
-    loop {
-        match rx_watcher.recv() {
-            Ok(event) => {
-                info!("{:?}", event);
-                tx_server.send("reload");
-            },
-            Err(e) => error!("watch error: {:?}", e),
+    try!(watcher.watch(config_file, RecursiveMode::NonRecursive)); // NonRecursie as we only watch config file
+    thread::spawn(move || {
+        loop {
+            match rx_watcher.recv() {
+                Ok(event) => {
+                    match event {
+                        Create(_) | Write(_) => tx_server.send("reload").unwrap(), // reload only on file save or create
+                        _ => continue
+                    }
+                },
+                Err(e) => error!("watch error: {:?}", e),
+            }
         }
-    }
+    });
+    serve(matches, Some(rx_server))
 }
 
 fn process_config_requests(requests: &HashMap<String, RequestConfig>,
