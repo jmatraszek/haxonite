@@ -44,6 +44,7 @@ use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
 
 use std::thread;
+use std::path::PathBuf;
 
 mod config;
 use config::{Config, ServerConfig, RequestConfig, ResponseConfig};
@@ -129,19 +130,19 @@ fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> 
 
         if let Some(ref rx_watcher) = rx_watcher {
             'watch: loop {
-                info!("Waiting for event to be received!");
                 match rx_watcher.recv() {
-                    Ok(event) => {
-                        info!("Event: {:?}", event);
-                        match event {
-                            Create(_) | Write(_) => {
+                    Ok(Create(path)) | Ok(Write(path)) => {
+                        match PathBuf::from(&path).ends_with(config_file) {
+                            true => {
+                                info!("Reloading...");
                                 _iron.close().expect("Iron cannot be closed");
                                 thread::sleep(Duration::from_secs(1));
                                 break 'watch
                             },
-                            _ => continue 'watch
+                            false => continue 'watch
                         }
                     },
+                    Ok(_) => continue 'watch,
                     Err(e) => error!("watch error: {:?}", e),
                 }
             }
@@ -150,11 +151,12 @@ fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> 
 }
 
 fn watch(matches: &ArgMatches) -> Result<(), HaxoniteError> {
-    let config_file = matches.value_of("config_file").unwrap_or("config.toml");
+    let config_file = PathBuf::from(matches.value_of("config_file").unwrap_or("config.toml"));
 
     let (tx_watcher, rx_watcher) = channel();
     let mut watcher: RecommendedWatcher = try!(Watcher::new(tx_watcher, Duration::from_secs(1)));
-    try!(watcher.watch(config_file, RecursiveMode::NonRecursive)); // NonRecursie as we only watch config file
+    let dir = config_file.parent().unwrap();
+    try!(watcher.watch(dir, RecursiveMode::NonRecursive)); // NonRecursie as we only watch config file
 
     serve(matches, Some(rx_watcher))
 }
