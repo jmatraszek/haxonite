@@ -262,7 +262,7 @@ fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {
             .short("p")
             .long("port")
             .value_name("PORT")
-            .help("Run Haxonite on the specified port. Default: 4000.")
+            .help("Run Haxonite on the specified port. Default: 7878.")
             .takes_value(true))
         .arg(Arg::with_name("config_file")
             .short("c")

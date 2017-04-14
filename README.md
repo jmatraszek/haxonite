@@ -44,7 +44,7 @@ FLAGS:
 OPTIONS:
     -c, --config <FILE>    Sets a custom config file. Default: config.toml.
     -h, --host <HOST>      Run Haxonite on the host. Default: localhost.
-    -p, --port <PORT>      Run Haxonite on the specified port. Default: 4000.
+    -p, --port <PORT>      Run Haxonite on the specified port. Default: 7878.
 
 SUBCOMMANDS:
     help    Prints this message or the help of the given subcommand(s)
@@ -85,7 +85,7 @@ Following `config.toml` config file was created...
 
 ```
 [server]
-port = 4000
+port = 7878
 host = "localhost"
 
 [requests.example_request]
@@ -128,13 +128,13 @@ $ cd example && haxonite
 14:11:42 [INFO] Defining route for: / using single type of handler.
 14:11:42 [INFO] Processing config for assets_request: RequestConfig { type_: Some("static"), method: None, path: Some("/public"), responses: Some([ResponseConfig { headers: None, status: None, response: Some("assets"), weight: None, delay: None }]) }!
 14:11:42 [INFO] Mounting static for: /public using static type of handler.
-14:11:42 [INFO] Haxonite running on port: 4000!
+14:11:42 [INFO] Haxonite running on port: 7878!
 ```
 
 And let's make a request to our mocked API and see what Haxonite returns:
 
 ```
-$ curl http://localhost:4000
+$ curl http://localhost:7878
 {
   "haxonite": {
     "version": "0.1.0",

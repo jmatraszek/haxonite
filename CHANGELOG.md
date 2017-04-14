@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - [#1](https://github.com/jmatraszek/haxonite/issues/1): Fix panic when
   Iron cannot start
 
+### Changed
+- [#8](https://github.com/jmatraszek/haxonite/issues/8): Use 7878 as
+  a default port
+
 ## [0.1.0] - 2017-01-06
 ### Added
 - Initial release

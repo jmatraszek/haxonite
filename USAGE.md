@@ -37,14 +37,14 @@ and port on which Haxonite runs. Default server section looks like this:
 
 ```
 [server]
-port = 4000
+port = 7878
 host = "localhost"
 ```
 
 Please note that the value specified as a port should be an integer and
 value specified as a hostname should be a string. You may need root rights
 if you want to run Haxonite on a port number less than 1024. You may omit
-those options in the config file and the default values (`4000` and
+those options in the config file and the default values (`7878` and
 `"localhost"`) will be used. You may also overwrite them from
 command-line. Please refer to `haxonite help` for more details on that.
 

@@ -56,7 +56,7 @@ pub struct ResponseConfig {
     pub delay: Option<u64>,
 }
 
-const DEFAULT_PORT: u16 = 4000;
+const DEFAULT_PORT: u16 = 7878;
 pub fn default_port() -> u16 {
     DEFAULT_PORT
 }

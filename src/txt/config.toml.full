@@ -1,5 +1,5 @@
 [server]
-port = 4000
+port = 7878
 host = "localhost"
 
 [requests.show_request]

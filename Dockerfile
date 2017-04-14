@@ -1,6 +1,6 @@
 FROM jimmycuadra/rust:latest
 
-EXPOSE 4000
+EXPOSE 7878
 RUN mkdir /haxonite
 WORKDIR /haxonite
 ENV PATH="/root/.cargo/bin:${PATH}"
