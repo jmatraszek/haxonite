@@ -135,13 +135,7 @@ fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> 
                         match PathBuf::from(&path).ends_with(config_file) {
                             true => {
                                 info!("Reloading...");
-                                let child = thread::spawn(move || {
-                                    let res = drop(_iron);
-                                });
-                                use std::net::TcpStream;
-                                use std::io::Write;
-                                let res = TcpStream::connect("127.0.0.1:4000").unwrap().write(&[1]);
-                                let res = child.join();
+                                _iron.close().expect("Iron cannot be closed");
                                 thread::sleep(Duration::from_secs(1));
                                 break 'watch
                             },
