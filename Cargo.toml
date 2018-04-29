@@ -27,3 +27,6 @@ random_choice = "0.3"
 logger = "0.3"
 regex = "0.2.1"
 notify = "4.0.0"
+
+[dev-dependencies]
+difference = "0.4"
