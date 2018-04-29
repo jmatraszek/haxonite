@@ -49,7 +49,6 @@ use std::path::PathBuf;
 mod config;
 use config::{Config, ServerConfig, RequestConfig, ResponseConfig};
 use std::collections::HashMap;
-use std::ascii::AsciiExt;
 mod error;
 use error::HaxoniteError;
 mod handlers;
