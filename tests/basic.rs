@@ -23,14 +23,14 @@ fn test_basic_project_test() {
     start_project("basic2", || {
         get_request("/", |response| {
             assert_response!(response, |response: Response| {
-                assert_status!(&response, StatusCode::Ok);
+                assert_status!(&response, StatusCode::OK);
                 assert_header!(&response, "Content-Type", "application/json");
             });
         });
 
         get_request("/public/haxonite.png", |response| {
             assert_response!(response, |response: Response| {
-                assert_status!(&response, StatusCode::Ok);
+                assert_status!(&response, StatusCode::OK);
                 assert_header!(&response, "Content-Type", "image/png");
                 assert_header!(&response, "Content-Length", "60629");
             });

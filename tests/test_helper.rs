@@ -87,7 +87,7 @@ macro_rules! assert_header {
     ($response:expr, $header_name:expr, $header_value:expr) => ({
         match ($response, $header_name, $header_value) {
             (response, header_name, header_value) => {
-                assert!(response.headers().get_raw(header_name).unwrap() == header_value);
+                assert!(response.headers().get(header_name).unwrap() == header_value);
             }
         }
     })

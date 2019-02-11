@@ -30,4 +30,4 @@ notify = "4.0.0"
 
 [dev-dependencies]
 difference = "0.4"
-reqwest = "0.8.5"
+reqwest = "0.9.9"
