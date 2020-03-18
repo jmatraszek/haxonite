@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs::File;
 use std::io;
 use std::io::Read;
@@ -102,11 +101,11 @@ pub fn read_config(file_name: &str) -> io::Result<String> {
     let mut content = String::new();
     let mut file = match File::open(file_name) {
         Ok(file) => file,
-        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err.description()))),
+        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err))),
     };
     match file.read_to_string(&mut content) {
         Ok(_) => (),
-        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err.description()))),
+        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err))),
     };
     Ok(content)
 }

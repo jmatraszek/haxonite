@@ -90,7 +90,7 @@ fn run() -> Result<(), HaxoniteError> {
 
 fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
-    'serve: loop {
+    loop {
         let config_content = config::read_config(config_file)?;
         let config: Config = toml::decode_str(config_content.as_ref()).unwrap(); // TODO: remove unwrap to handle malformed config
         debug!("Using config: {:?}!", config);

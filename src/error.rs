@@ -38,7 +38,7 @@ impl From<notify::Error> for HaxoniteError {
 
 impl Error for HaxoniteError {
     fn description(&self) -> &str {
-        match *self {
+        match self {
             HaxoniteError::Io(ref err) => err.description(),
             HaxoniteError::Server(ref err) => err.description(),
             HaxoniteError::Watch(ref err) => err.description(),
