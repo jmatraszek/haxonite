@@ -52,7 +52,7 @@ impl Error for HaxoniteError {
         }
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         match *self {
             HaxoniteError::Io(ref err) => Some(err),
             HaxoniteError::Server(ref err) => Some(err),

@@ -189,7 +189,7 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
         Some(response_configs) => response_configs,
         None => return Err(HaxoniteError::NoResponseDefined(request_name.clone())),
     };
-    let handler: Box<Handler> = match type_.as_ref() {
+    let handler: Box<dyn Handler> = match type_.as_ref() {
         "single" => {
             let response_config = try!(response_configs.first()
                 .ok_or(HaxoniteError::NoResponseDefined(request_name.clone())));
