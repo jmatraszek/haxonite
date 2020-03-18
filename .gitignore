@@ -1,2 +1,3 @@
 target
-tests/test_projects
+tests/test_projects/*
+!tests/test_projects/.keep
