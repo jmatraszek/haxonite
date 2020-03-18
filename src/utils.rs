@@ -30,21 +30,21 @@ pub fn response_body(response_path: String) -> String {
 pub fn create_new_project(project_name: &str, generate_full_project: bool) -> Result<(), HaxoniteError> {
     info!("Creating new project: {}!", project_name);
 
-    try!(fs::create_dir_all(Path::new(project_name).join("responses")));
-    try!(fs::create_dir_all(Path::new(project_name).join("assets")));
+    fs::create_dir_all(Path::new(project_name).join("responses"))?;
+    fs::create_dir_all(Path::new(project_name).join("assets"))?;
 
-    let mut config_toml = try!(File::create(Path::new(project_name).join("config.toml")));
-    try!(config_toml.write_all(config_toml_content(generate_full_project)));
+    let mut config_toml = File::create(Path::new(project_name).join("config.toml"))?;
+    config_toml.write_all(config_toml_content(generate_full_project))?;
 
-    let mut haxonite_json = try!(File::create(Path::new(project_name).join("responses").join("haxonite.json")));
-    try!(haxonite_json.write_all(LIMONITE_JSON.as_bytes()));
-    try!(try!(File::create(Path::new(project_name).join("assets").join("haxonite.png"))).write_all(LIMONITE_LOGO));
+    let mut haxonite_json = File::create(Path::new(project_name).join("responses").join("haxonite.json"))?;
+    haxonite_json.write_all(LIMONITE_JSON.as_bytes())?;
+    File::create(Path::new(project_name).join("assets").join("haxonite.png"))?.write_all(LIMONITE_LOGO)?;
 
     if generate_full_project {
-        try!(try!(File::create(Path::new(project_name).join("responses").join("resources.json"))).write_all(RESOURCES_JSON.as_bytes()));
-        try!(try!(File::create(Path::new(project_name).join("responses").join("resource.json"))).write_all(RESOURCE_JSON.as_bytes()));
-        try!(try!(File::create(Path::new(project_name).join("responses").join("error.404.json"))).write_all(ERROR_404_JSON.as_bytes()));
-        try!(try!(File::create(Path::new(project_name).join("responses").join("error.500.json"))).write_all(ERROR_500_JSON.as_bytes()));
+        File::create(Path::new(project_name).join("responses").join("resources.json"))?.write_all(RESOURCES_JSON.as_bytes())?;
+        File::create(Path::new(project_name).join("responses").join("resource.json"))?.write_all(RESOURCE_JSON.as_bytes())?;
+        File::create(Path::new(project_name).join("responses").join("error.404.json"))?.write_all(ERROR_404_JSON.as_bytes())?;
+        File::create(Path::new(project_name).join("responses").join("error.500.json"))?.write_all(ERROR_500_JSON.as_bytes())?;
     }
 
     Ok(())

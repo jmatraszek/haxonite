@@ -74,16 +74,16 @@ fn run() -> Result<(), HaxoniteError> {
     if let Some(matches) = matches.subcommand_matches("new") {
         let generate_full_project = matches.is_present("full");
         if let Some(project_name) = matches.value_of("project_name") {
-            try!(utils::create_new_project(project_name, generate_full_project));
+            utils::create_new_project(project_name, generate_full_project)?;
         }
         return Ok(());
     }
 
     if let Some(matches) = matches.subcommand_matches("serve") {
-        try!(serve(matches, None));
+        serve(matches, None)?;
     }
     if let Some(matches) = matches.subcommand_matches("watch") {
-        try!(watch(matches));
+        watch(matches)?;
     }
     Ok(())
 }
@@ -91,7 +91,7 @@ fn run() -> Result<(), HaxoniteError> {
 fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> Result<(), HaxoniteError> {
     let config_file = matches.value_of("config_file").unwrap_or("config.toml");
     'serve: loop {
-        let config_content = try!(config::read_config(config_file));
+        let config_content = config::read_config(config_file)?;
         let config: Config = toml::decode_str(config_content.as_ref()).unwrap(); // TODO: remove unwrap to handle malformed config
         debug!("Using config: {:?}!", config);
 
@@ -111,7 +111,7 @@ fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> 
         let mut mount = Mount::new();
         match config.requests {
             Some(requests) => {
-                try!(process_config_requests(&requests, &mut mount, &mut router));
+                process_config_requests(&requests, &mut mount, &mut router)?;
             }
             None => return Err(HaxoniteError::NoRequestDefined),
         }
@@ -125,7 +125,7 @@ fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> 
         chain.link_after(logger_after);
 
         // Initialize Iron to process requests
-        let mut _iron = try!(Iron::new(chain).http((host.as_ref(), port_number)));
+        let mut _iron = Iron::new(chain).http((host.as_ref(), port_number))?;
         info!("Haxonite running on port: {}!", port_number);
 
         if let Some(ref rx_watcher) = rx_watcher {
@@ -152,9 +152,9 @@ fn watch(matches: &ArgMatches) -> Result<(), HaxoniteError> {
     let config_file = PathBuf::from(matches.value_of("config_file").unwrap_or("config.toml"));
 
     let (tx_watcher, rx_watcher) = channel();
-    let mut watcher: RecommendedWatcher = try!(Watcher::new(tx_watcher, Duration::from_secs(1)));
+    let mut watcher: RecommendedWatcher = Watcher::new(tx_watcher, Duration::from_secs(1))?;
     let dir = config_file.parent().unwrap();
-    try!(watcher.watch(dir, RecursiveMode::NonRecursive)); // NonRecursie as we only watch config file
+    watcher.watch(dir, RecursiveMode::NonRecursive)?; // NonRecursie as we only watch config file
 
     serve(matches, Some(rx_watcher))
 }
@@ -167,7 +167,7 @@ fn process_config_requests(
     info!("Processing config!");
     for (request_name, request_config) in requests {
         info!("Processing config for {}: {:?}!", request_name, request_config);
-        try!(define_route(request_name.clone(), request_config.clone(), &mut mount, &mut router));
+        define_route(request_name.clone(), request_config.clone(), &mut mount, &mut router)?;
     }
     Ok(())
 }
@@ -186,40 +186,37 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
     };
     let handler: Box<dyn Handler> = match type_.as_ref() {
         "single" => {
-            let response_config = try!(response_configs
+            let response_config = response_configs
                 .first()
-                .ok_or(HaxoniteError::NoResponseDefined(request_name.clone())));
-            Box::new(try!(get_single_response_handler(request_name.clone(), response_config.clone())))
+                .ok_or(HaxoniteError::NoResponseDefined(request_name.clone()))?;
+            Box::new(get_single_response_handler(request_name.clone(), response_config.clone())?)
         }
         "random" => {
             let mut handler = RandomResponse::new();
             for response_config in &response_configs {
                 let weight = response_config.weight.unwrap_or_else(config::default_weight);
-                handler.add_handler(
-                    weight,
-                    try!(get_single_response_handler(request_name.clone(), response_config.clone())),
-                );
+                handler.add_handler(weight, get_single_response_handler(request_name.clone(), response_config.clone())?);
             }
             Box::new(handler)
         }
         "roundrobin" => {
             let mut handler = IteratingResponse::new("roundrobin");
             for response_config in &response_configs {
-                handler.add_handler(try!(get_single_response_handler(request_name.clone(), response_config.clone())));
+                handler.add_handler(get_single_response_handler(request_name.clone(), response_config.clone())?);
             }
             Box::new(handler)
         }
         "chain" => {
             let mut handler = IteratingResponse::new("chain");
             for response_config in &response_configs {
-                handler.add_handler(try!(get_single_response_handler(request_name.clone(), response_config.clone())));
+                handler.add_handler(get_single_response_handler(request_name.clone(), response_config.clone())?);
             }
             Box::new(handler)
         }
         "static" => {
-            let response_config = try!(response_configs
+            let response_config = response_configs
                 .first()
-                .ok_or(HaxoniteError::NoResponseDefined(request_name.clone())));
+                .ok_or(HaxoniteError::NoResponseDefined(request_name.clone()))?;
             let response = match response_config.response {
                 Some(ref response) => response,
                 None => return Err(HaxoniteError::NoResponseDefined(request_name.clone())),
