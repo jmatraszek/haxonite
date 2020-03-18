@@ -1,4 +1,5 @@
-#[macro_use] mod test_helper;
+#[macro_use]
+mod test_helper;
 use test_helper::*;
 
 #[test]
@@ -39,4 +40,3 @@ fn test_basic_project_test() {
 
     remove_test_project("basic2");
 }
-

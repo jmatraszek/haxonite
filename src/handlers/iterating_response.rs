@@ -1,7 +1,7 @@
-use iron::{Handler, Request, Response, IronResult};
 use handlers::single_response::SingleResponse;
-use std::sync::{Arc, Mutex};
+use iron::{Handler, IronResult, Request, Response};
 use std::cmp;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug)]
 pub struct IteratingResponse {

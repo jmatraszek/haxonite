@@ -5,16 +5,16 @@ static FORMAT: &'static str = "{request-time}: {method} {uri} {status} {response
 
 #[macro_use]
 extern crate clap;
-use clap::{Arg, ArgMatches, App, AppSettings, SubCommand};
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 
-extern crate toml;
-extern crate rustc_serialize;
 extern crate regex;
+extern crate rustc_serialize;
+extern crate toml;
 
 extern crate iron;
+use iron::method::Method;
 use iron::prelude::*;
 use iron::Handler;
-use iron::method::Method;
 use std::str::FromStr;
 
 extern crate router;
@@ -29,25 +29,25 @@ use mount::Mount;
 #[macro_use]
 extern crate log;
 extern crate simplelog;
-use simplelog::{SimpleLogger, LogLevelFilter};
+use simplelog::{LogLevelFilter, SimpleLogger};
 
 extern crate logger;
-use logger::Logger;
 use logger::Format;
+use logger::Logger;
 
 extern crate notify;
 
-use notify::{RecommendedWatcher, Watcher, RecursiveMode};
 use notify::DebouncedEvent;
 use notify::DebouncedEvent::{Create, Write};
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
 
-use std::thread;
 use std::path::PathBuf;
+use std::thread;
 
 mod config;
-use config::{Config, ServerConfig, RequestConfig, ResponseConfig};
+use config::{Config, RequestConfig, ResponseConfig, ServerConfig};
 use std::collections::HashMap;
 mod error;
 use error::HaxoniteError;
@@ -96,7 +96,8 @@ fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> 
         debug!("Using config: {:?}!", config);
 
         let server_config = config.server.unwrap_or_else(ServerConfig::default);
-        let host = match value_t!(matches, "host", String) { // TODO: rewrite these matches
+        let host = match value_t!(matches, "host", String) {
+            // TODO: rewrite these matches
             Ok(host) => host,
             Err(_) => server_config.host.unwrap_or_else(config::default_host),
         };
@@ -130,16 +131,14 @@ fn serve(matches: &ArgMatches, rx_watcher: Option<Receiver<DebouncedEvent>>) -> 
         if let Some(ref rx_watcher) = rx_watcher {
             'watch: loop {
                 match rx_watcher.recv() {
-                    Ok(Create(path)) | Ok(Write(path)) => {
-                        match PathBuf::from(&path).ends_with(config_file) {
-                            true => {
-                                info!("Reloading...");
-                                _iron.close().expect("Iron cannot be closed");
-                                thread::sleep(Duration::from_secs(1));
-                                break 'watch
-                            },
-                            false => continue 'watch
+                    Ok(Create(path)) | Ok(Write(path)) => match PathBuf::from(&path).ends_with(config_file) {
+                        true => {
+                            info!("Reloading...");
+                            _iron.close().expect("Iron cannot be closed");
+                            thread::sleep(Duration::from_secs(1));
+                            break 'watch;
                         }
+                        false => continue 'watch,
                     },
                     Ok(_) => continue 'watch,
                     Err(e) => error!("watch error: {:?}", e),
@@ -160,19 +159,15 @@ fn watch(matches: &ArgMatches) -> Result<(), HaxoniteError> {
     serve(matches, Some(rx_watcher))
 }
 
-fn process_config_requests(requests: &HashMap<String, RequestConfig>,
-                           mut mount: &mut Mount,
-                           mut router: &mut Router)
-                           -> Result<(), HaxoniteError> {
+fn process_config_requests(
+    requests: &HashMap<String, RequestConfig>,
+    mut mount: &mut Mount,
+    mut router: &mut Router,
+) -> Result<(), HaxoniteError> {
     info!("Processing config!");
     for (request_name, request_config) in requests {
-        info!("Processing config for {}: {:?}!",
-              request_name,
-              request_config);
-        try!(define_route(request_name.clone(),
-                          request_config.clone(),
-                          &mut mount,
-                          &mut router));
+        info!("Processing config for {}: {:?}!", request_name, request_config);
+        try!(define_route(request_name.clone(), request_config.clone(), &mut mount, &mut router));
     }
     Ok(())
 }
@@ -191,7 +186,8 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
     };
     let handler: Box<dyn Handler> = match type_.as_ref() {
         "single" => {
-            let response_config = try!(response_configs.first()
+            let response_config = try!(response_configs
+                .first()
                 .ok_or(HaxoniteError::NoResponseDefined(request_name.clone())));
             Box::new(try!(get_single_response_handler(request_name.clone(), response_config.clone())))
         }
@@ -199,8 +195,10 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
             let mut handler = RandomResponse::new();
             for response_config in &response_configs {
                 let weight = response_config.weight.unwrap_or_else(config::default_weight);
-                handler.add_handler(weight,
-                                    try!(get_single_response_handler(request_name.clone(), response_config.clone())));
+                handler.add_handler(
+                    weight,
+                    try!(get_single_response_handler(request_name.clone(), response_config.clone())),
+                );
             }
             Box::new(handler)
         }
@@ -219,7 +217,8 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
             Box::new(handler)
         }
         "static" => {
-            let response_config = try!(response_configs.first()
+            let response_config = try!(response_configs
+                .first()
                 .ok_or(HaxoniteError::NoResponseDefined(request_name.clone())));
             let response = match response_config.response {
                 Some(ref response) => response,
@@ -232,24 +231,17 @@ fn define_route(request_name: String, request_config: RequestConfig, mount: &mut
     };
 
     match Method::from_str(method.to_ascii_uppercase().as_ref()) {
-        Ok(Method::Extension(_)) |
-        Err(_) => return Err(HaxoniteError::InvalidHTTPMethod(request_name.clone())),
-        Ok(a) => {
-            match type_.as_ref() {
-                "static" => {
-                    info!("Mounting static for: {} using {} type of handler.",
-                          path,
-                          type_);
-                    mount.mount(path.as_ref(), handler);
-                }
-                _ => {
-                    info!("Defining route for: {} using {} type of handler.",
-                          path,
-                          type_);
-                    router.route(a, path.clone(), handler, request_name);
-                }
+        Ok(Method::Extension(_)) | Err(_) => return Err(HaxoniteError::InvalidHTTPMethod(request_name.clone())),
+        Ok(a) => match type_.as_ref() {
+            "static" => {
+                info!("Mounting static for: {} using {} type of handler.", path, type_);
+                mount.mount(path.as_ref(), handler);
             }
-        }
+            _ => {
+                info!("Defining route for: {} using {} type of handler.", path, type_);
+                router.route(a, path.clone(), handler, request_name);
+            }
+        },
     };
     Ok(())
 }
@@ -278,21 +270,24 @@ fn process_headers(headers: Option<Vec<String>>) -> Vec<Vec<String>> {
     let re = Regex::new(r"([\w-]+):\s+([\w/]+)").unwrap();
 
     let headers = headers.unwrap_or_else(config::default_headers);
-    headers.iter()
+    headers
+        .iter()
         .filter(|header| {
             if re.is_match(header) {
                 true
             } else {
-                warn!("Header {} is invalid (does not match \": \"). Skipping.",
-                      header);
+                warn!("Header {} is invalid (does not match \": \"). Skipping.", header);
                 false
             }
         })
         .map(|header| {
-            header.split(": ")
-                .map(// TODO: This is quite stupid and could be done with &str,
-                     // but I decided to use String to not fight borrow checker for now...
-                     |hdr| hdr.to_string())
+            header
+                .split(": ")
+                .map(
+                    // TODO: This is quite stupid and could be done with &str,
+                    // but I decided to use String to not fight borrow checker for now...
+                    |hdr| hdr.to_string(),
+                )
                 .collect()
         })
         .collect()
@@ -304,60 +299,82 @@ fn define_command_line_options<'a, 'b>() -> App<'a, 'b> {
         .version(VERSION)
         .author(AUTHORS)
         .about("Easy API mocking")
-        .subcommand(SubCommand::with_name("serve")
-            .about("Starts Haxonite server")
-            .version(VERSION)
-            .author(AUTHORS)
-            .arg(Arg::with_name("host")
-                 .short("h")
-                 .long("host")
-                 .value_name("HOST")
-                 .help("Run Haxonite on the host. Default: localhost.")
-                 .takes_value(true))
-            .arg(Arg::with_name("port_number")
-                 .short("p")
-                 .long("port")
-                 .value_name("PORT")
-                 .help("Run Haxonite on the specified port. Default: 4000.")
-                 .takes_value(true))
-            .arg(Arg::with_name("config_file")
-                 .short("c")
-                 .long("config")
-                 .value_name("FILE")
-                 .help("Sets a custom config file. Default: config.toml.")
-                 .takes_value(true)))
-        .subcommand(SubCommand::with_name("watch")
-            .about("Starts Haxonite server with dynamic reload on change")
-            .version(VERSION)
-            .author(AUTHORS)
-            .arg(Arg::with_name("host")
-                 .short("h")
-                 .long("host")
-                 .value_name("HOST")
-                 .help("Run Haxonite on the host. Default: localhost.")
-                 .takes_value(true))
-            .arg(Arg::with_name("port_number")
-                 .short("p")
-                 .long("port")
-                 .value_name("PORT")
-                 .help("Run Haxonite on the specified port. Default: 4000.")
-                 .takes_value(true))
-            .arg(Arg::with_name("config_file")
-                 .short("c")
-                 .long("config")
-                 .value_name("FILE")
-                 .help("Sets a custom config file. Default: config.toml.")
-                 .takes_value(true)))
-        .subcommand(SubCommand::with_name("new")
-            .about("Create new Haxonite project")
-            .version(VERSION)
-            .author(AUTHORS)
-            .arg(Arg::with_name("full")
-                .help("Use to create a project with full config.toml file")
-                .short("f")
-                .long("full"))
-            .arg(Arg::with_name("project_name")
-                .help("Name of the project (will be used as a directory name)")
-                .index(1)
-                .required(true)))
+        .subcommand(
+            SubCommand::with_name("serve")
+                .about("Starts Haxonite server")
+                .version(VERSION)
+                .author(AUTHORS)
+                .arg(
+                    Arg::with_name("host")
+                        .short("h")
+                        .long("host")
+                        .value_name("HOST")
+                        .help("Run Haxonite on the host. Default: localhost.")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("port_number")
+                        .short("p")
+                        .long("port")
+                        .value_name("PORT")
+                        .help("Run Haxonite on the specified port. Default: 4000.")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("config_file")
+                        .short("c")
+                        .long("config")
+                        .value_name("FILE")
+                        .help("Sets a custom config file. Default: config.toml.")
+                        .takes_value(true),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("watch")
+                .about("Starts Haxonite server with dynamic reload on change")
+                .version(VERSION)
+                .author(AUTHORS)
+                .arg(
+                    Arg::with_name("host")
+                        .short("h")
+                        .long("host")
+                        .value_name("HOST")
+                        .help("Run Haxonite on the host. Default: localhost.")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("port_number")
+                        .short("p")
+                        .long("port")
+                        .value_name("PORT")
+                        .help("Run Haxonite on the specified port. Default: 4000.")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("config_file")
+                        .short("c")
+                        .long("config")
+                        .value_name("FILE")
+                        .help("Sets a custom config file. Default: config.toml.")
+                        .takes_value(true),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("new")
+                .about("Create new Haxonite project")
+                .version(VERSION)
+                .author(AUTHORS)
+                .arg(
+                    Arg::with_name("full")
+                        .help("Use to create a project with full config.toml file")
+                        .short("f")
+                        .long("full"),
+                )
+                .arg(
+                    Arg::with_name("project_name")
+                        .help("Name of the project (will be used as a directory name)")
+                        .index(1)
+                        .required(true),
+                ),
+        )
 }

@@ -1,8 +1,8 @@
 extern crate iron;
 extern crate notify;
-use std::io;
-use std::fmt;
 use std::error::Error;
+use std::fmt;
+use std::io;
 
 #[derive(Debug)]
 pub enum HaxoniteError {
@@ -57,13 +57,13 @@ impl Error for HaxoniteError {
             HaxoniteError::Io(ref err) => Some(err),
             HaxoniteError::Server(ref err) => Some(err),
             HaxoniteError::Watch(ref err) => Some(err),
-            HaxoniteError::NoRequestDefined |
-            HaxoniteError::NoPathDefined(_) |
-            HaxoniteError::NoResponseDefined(_) |
-            HaxoniteError::ResponseDoesNotExist(_) |
-            HaxoniteError::InvalidHTTPStatus(_, _) |
-            HaxoniteError::InvalidHTTPMethod(_) |
-            HaxoniteError::InvalidType(_) => None,
+            HaxoniteError::NoRequestDefined
+            | HaxoniteError::NoPathDefined(_)
+            | HaxoniteError::NoResponseDefined(_)
+            | HaxoniteError::ResponseDoesNotExist(_)
+            | HaxoniteError::InvalidHTTPStatus(_, _)
+            | HaxoniteError::InvalidHTTPMethod(_)
+            | HaxoniteError::InvalidType(_) => None,
         }
     }
 }
@@ -74,43 +74,35 @@ impl fmt::Display for HaxoniteError {
             HaxoniteError::Io(ref err) => write!(f, "{:?}: {}", err.kind(), err),
             HaxoniteError::Server(ref err) => write!(f, "ServerError: {}", err),
             HaxoniteError::Watch(ref err) => write!(f, "WatchError: {}", err),
-            HaxoniteError::NoRequestDefined => {
-                write!(f,
-                       "NoRequestDefined error: No request defined in config.toml")
-            }
+            HaxoniteError::NoRequestDefined => write!(f, "NoRequestDefined error: No request defined in config.toml"),
             HaxoniteError::NoPathDefined(ref request) => {
-                write!(f,
-                       "NoPathDefined error: No path defined for {} request in config.toml",
-                       request)
+                write!(f, "NoPathDefined error: No path defined for {} request in config.toml", request)
             }
-            HaxoniteError::NoResponseDefined(ref request) => {
-                write!(f,
-                       "NoResponseDefined error: No response defined for {} request in config.toml",
-                       request)
-            }
-            HaxoniteError::ResponseDoesNotExist(ref request) => {
-                write!(f,
-                       "NoResponseDefined error: Response file defined for {} request in \
+            HaxoniteError::NoResponseDefined(ref request) => write!(
+                f,
+                "NoResponseDefined error: No response defined for {} request in config.toml",
+                request
+            ),
+            HaxoniteError::ResponseDoesNotExist(ref request) => write!(
+                f,
+                "NoResponseDefined error: Response file defined for {} request in \
                         config.toml does not exist",
-                       request)
-            }
-            HaxoniteError::InvalidHTTPStatus(ref request, status) => {
-                write!(f,
-                       "InvalidHTTPStatus: Status {} defined for {} request in config.toml is not \
+                request
+            ),
+            HaxoniteError::InvalidHTTPStatus(ref request, status) => write!(
+                f,
+                "InvalidHTTPStatus: Status {} defined for {} request in config.toml is not \
                         a valid HTTP status",
-                       status,
-                       request)
-            }
-            HaxoniteError::InvalidHTTPMethod(ref request) => {
-                write!(f,
-                       "InvalidHTTPMethod error: Invalid HTTP method defined for {} request in \
+                status, request
+            ),
+            HaxoniteError::InvalidHTTPMethod(ref request) => write!(
+                f,
+                "InvalidHTTPMethod error: Invalid HTTP method defined for {} request in \
                         config.toml",
-                       request)
-            }
+                request
+            ),
             HaxoniteError::InvalidType(ref request) => {
-                write!(f,
-                       "InvalidType error: Invalid type defined for {} request in config.toml",
-                       request)
+                write!(f, "InvalidType error: Invalid type defined for {} request in config.toml", request)
             }
         }
     }

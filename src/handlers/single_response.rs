@@ -1,5 +1,5 @@
-use iron::{Handler, Request, Response, IronResult};
 use iron::status;
+use iron::{Handler, IronResult, Request, Response};
 use std::{thread, time};
 use utils;
 
@@ -24,7 +24,10 @@ impl SingleResponse {
 
 impl Handler for SingleResponse {
     fn handle(&self, _: &mut Request) -> IronResult<Response> {
-        let mut response = Response::with((status::Status::from_u16(self.status), utils::response_body(self.response_path.clone())));
+        let mut response = Response::with((
+            status::Status::from_u16(self.status),
+            utils::response_body(self.response_path.clone()),
+        ));
         for header in &self.headers {
             // FIXME: This will fail for headers in a wrong format (without ": ")
             response.headers.set_raw(header[0].clone(), vec![header[1].as_bytes().to_vec()]);

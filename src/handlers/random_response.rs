@@ -1,8 +1,8 @@
 extern crate random_choice;
 
-use iron::{Handler, Request, Response, IronResult};
-use handlers::single_response::SingleResponse;
 use self::random_choice::random_choice;
+use handlers::single_response::SingleResponse;
+use iron::{Handler, IronResult, Request, Response};
 
 #[derive(Debug)]
 pub struct RandomResponse {
@@ -27,10 +27,9 @@ impl RandomResponse {
 impl Handler for RandomResponse {
     fn handle(&self, r: &mut Request) -> IronResult<Response> {
         match random_choice()
-            .random_choice_f32(self.response_handlers.as_slice(),
-                               self.weights.as_slice(),
-                               1)
-            .first() {
+            .random_choice_f32(self.response_handlers.as_slice(), self.weights.as_slice(), 1)
+            .first()
+        {
             Some(handler) => handler.handle(r),
             None => self.response_handlers.first().unwrap().handle(r),
         }

@@ -1,8 +1,8 @@
-use std::io;
-use std::io::Read;
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
-use std::collections::HashMap;
+use std::io;
+use std::io::Read;
 
 extern crate rustc_serialize;
 use rustc_serialize::{Decodable, Decoder, DecoderHelpers};
@@ -33,9 +33,8 @@ impl Decodable for RequestConfig {
             let type_ = d.read_struct_field("type", 0, |d| d.read_str()).ok();
             let method = d.read_struct_field("method", 0, |d| d.read_str()).ok();
             let path = d.read_struct_field("path", 0, |d| d.read_str()).ok();
-            let responses = d.read_struct_field("responses",
-                                   0,
-                                   |d| d.read_to_vec(|d| ResponseConfig::decode(d)))
+            let responses = d
+                .read_struct_field("responses", 0, |d| d.read_to_vec(|d| ResponseConfig::decode(d)))
                 .ok();
             Ok(RequestConfig {
                 type_: type_,
@@ -103,11 +102,11 @@ pub fn read_config(file_name: &str) -> io::Result<String> {
     let mut content = String::new();
     let mut file = match File::open(file_name) {
         Ok(file) => file,
-        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err.description())))
+        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err.description()))),
     };
     match file.read_to_string(&mut content) {
         Ok(_) => (),
-        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err.description())))
+        Err(err) => return Err(io::Error::new(err.kind(), format!("{}: {}", file_name, err.description()))),
     };
     Ok(content)
 }

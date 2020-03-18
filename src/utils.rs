@@ -1,9 +1,9 @@
 // various utility functions here
+use error::HaxoniteError;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use error::HaxoniteError;
 
 extern crate rustache;
 
@@ -51,5 +51,9 @@ pub fn create_new_project(project_name: &str, generate_full_project: bool) -> Re
 }
 
 pub fn config_toml_content(generate_full_project: bool) -> &'static [u8] {
-   if generate_full_project { FULL_CONFIG_TOML.as_bytes() } else { BARE_CONFIG_TOML.as_bytes() }
+    if generate_full_project {
+        FULL_CONFIG_TOML.as_bytes()
+    } else {
+        BARE_CONFIG_TOML.as_bytes()
+    }
 }
